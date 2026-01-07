@@ -1,4 +1,4 @@
-import BusinessLayout from "@/features/business/components/BusinessLayout";
+import MerchantLayout from "@/features/merchant/components/BusinessLayout";
 import React from "react";
 
 export default async function GoogleBusinessLayout({
@@ -8,8 +8,8 @@ export default async function GoogleBusinessLayout({
 }) {
 
     return (
-        <BusinessLayout>
+        <MerchantLayout>
             {children}
-        </BusinessLayout>
+        </MerchantLayout>
     )
 }

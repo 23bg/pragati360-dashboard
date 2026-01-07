@@ -16,17 +16,16 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { Button } from "@/components/ui/button";
 import { ListPageWrapper } from "@/components/custom/page-wrapper";
-import CommonTableComponent from "@/components/common/common-table-component";
+import { CommonTableComponent } from "@/components/common/common-table-component";
 import { getUserColumns } from "./user-column";
 
-import { AppDispatch, RootState } from "@/store";
-import { fetchUsers } from "@/store/user.store";
+import { AppDispatch } from "@/shared/lib/store";
+import { useGetAllUsersQuery } from "@/features/user/services/userApi";
 
 export function UserTable() {
-  const dispatch = useDispatch<AppDispatch>();
-  const { users: list, loading, error } = useSelector(
-    (state: RootState) => state.user
-  );
+  const { data, isLoading: loading, error: queryError, refetch } = useGetAllUsersQuery();
+  const list = data?.data || [];
+  const error = queryError ? (queryError as any).message || JSON.stringify(queryError) : null;
 
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
@@ -37,10 +36,7 @@ export function UserTable() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [delayedRender, setDelayedRender] = React.useState(false);
 
-  // ✅ Fetch users from RTK on mount
-  React.useEffect(() => {
-    dispatch(fetchUsers());
-  }, [dispatch]);
+
 
   // ✅ Debounce search input
   React.useEffect(() => {
@@ -65,7 +61,7 @@ export function UserTable() {
     if (!searchQuery) return list;
     return list.filter(
       (user) =>
-        user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, list]);
@@ -104,7 +100,7 @@ export function UserTable() {
       onSearchChange={setInputQuery}
       isLoading={loading || !delayedRender}
       error={error}
-      onRetry={() => dispatch(fetchUsers())}
+      onRetry={refetch}
       showExport
       showRefresh
       showBackButton
@@ -115,7 +111,7 @@ export function UserTable() {
           <>
             <div className="w-full overflow-x-auto border rounded-lg shadow-sm bg-white">
               <div className="min-w-[700px]">
-                <CommonTableComponent table={table} columns={columns} />
+                <CommonTableComponent table={table} columns={columns} data={[]} />
               </div>
             </div>
 

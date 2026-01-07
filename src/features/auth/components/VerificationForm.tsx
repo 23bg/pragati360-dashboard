@@ -10,59 +10,56 @@ import { useRouter } from "next/navigation";
 import ROUTES from "@/shared/constants/route";
 import { useEffect, useState } from "react";
 import { appToast } from "@/components/common/AppToaster";
-import loading from "@/app/loading";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { register } from "module";
-import Link from "next/link";
-import { Label } from "recharts";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 
-// Validation schema
 const otpSchema = z.object({
-    otp: z.string().min(5, "OTP must be 5 digits"),
+    otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
 type OtpFormData = z.infer<typeof otpSchema>;
 
 export default function VerificationForm() {
-    const [codes, setCodes] = useState(["", "", "", "", "", ""])
+    const [codes, setCodes] = useState(["", "", "", "", "", ""]);
 
     const handleCodeChange = (index: number, value: string) => {
-        const newCodes = [...codes]
-        newCodes[index] = value.slice(0, 1)
-        setCodes(newCodes)
+        const next = [...codes];
+        next[index] = value.slice(0, 1);
+        setCodes(next);
 
-        // Move focus to next input
         if (value && index < 5) {
-            const nextInput = document.getElementById(`code-${index + 1}`)
-            nextInput?.focus()
+            document.getElementById(`code-${index + 1}`)?.focus();
         }
-    }
+    };
 
     const router = useRouter();
     const { verifyOTP, loading } = useAuth();
 
     const [email, setEmail] = useState<string | null>(null);
 
-    // Load email from localStorage (on client only)
     useEffect(() => {
         const storedEmail = localStorage.getItem("login_email");
-
         if (!storedEmail) {
             appToast.error("Session expired, please login again.");
             router.push(ROUTES.AUTH.LOG_IN);
             return;
         }
-
         setEmail(storedEmail);
     }, []);
 
     const {
-        register,
         handleSubmit,
+        setValue,
         formState: { errors },
-        reset,
     } = useForm<OtpFormData>({
         resolver: zodResolver(otpSchema),
+        defaultValues: { otp: "" },
     });
 
     const onSubmit = async (data: OtpFormData) => {
@@ -70,79 +67,69 @@ export default function VerificationForm() {
 
         verifyOTP(
             { email, otp: data.otp },
-
             {
                 onSuccess: () => {
-                    appToast.success("OTP verified successfully!");
-
-                    // Remove stored email
+                    appToast.success("OTP verified successfully.");
                     localStorage.removeItem("login_email");
-
-                    // router.push(ROUTES.APP.ROOT);
-                    reset();
                 },
-
-                onError: (err) => {
+                onError: (err: any) => {
                     appToast.error(err || "Invalid OTP. Please try again.");
                 },
             }
         );
     };
 
-    // Prevent UI from flashing while email loads
     if (email === null) return null;
 
     return (
-
         <Card className="border-0 shadow-lg">
-            <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl">Create an account</CardTitle>
-                <CardDescription>
-                    Enter your details to continue
-                </CardDescription>
+            <CardHeader>
+                <CardTitle className="text-2xl">Verify your account</CardTitle>
+                <CardDescription>Enter the 6-digit code sent to your email</CardDescription>
             </CardHeader>
 
             <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        const finalOtp = codes.join("");
+                        setValue("otp", finalOtp, { shouldValidate: true });
+                        handleSubmit(onSubmit)(); // validation runs AFTER setting OTP
+                    }}
+                    className="space-y-4"
+                >
                     <div className="space-y-2">
-                        <Label className="text-center block">Enter verification code</Label>
-                        <div className="flex gap-2 justify-center">
-                            {codes.map((code, index) => (
+                        <Label className="block text-center">Verification Code</Label>
+
+                        <div className="flex justify-center gap-2">
+                            {codes.map((c, i) => (
                                 <Input
-                                    key={index}
-                                    id={`code-${index}`}
-                                    type="text"
-                                    inputMode="numeric"
+                                    key={i}
+                                    id={`code-${i}`}
                                     maxLength={1}
-                                    value={code}
-                                    onChange={(e) => handleCodeChange(index, e.target.value)}
-                                    className="w-12 h-12 text-center text-xl font-semibold"
+                                    inputMode="numeric"
+                                    value={c}
+                                    onChange={(e) => handleCodeChange(i, e.target.value)}
+                                    className="w-12 h-12 text-xl text-center font-semibold"
                                     disabled={loading}
                                 />
                             ))}
-
-                            {errors.otp && (
-                                <p className="text-red-500 text-sm">{errors.otp.message}</p>
-                            )}
                         </div>
+
+                        {errors.otp && (
+                            <p className="text-red-500 text-sm text-center">{errors.otp.message}</p>
+                        )}
                     </div>
 
-                    {/* Submit */}
-                    {/* Submit */}
                     <Button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || codes.join("").length !== 6}
                         className="w-full bg-blue-600 text-white"
                     >
                         {loading ? "Verifying..." : "Verify OTP"}
                     </Button>
-
-
                 </form>
             </CardContent>
         </Card>
-
     );
 }
-

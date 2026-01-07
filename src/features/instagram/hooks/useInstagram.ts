@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useAppDispatch, useAppSelector } from "@/shared/hooks/reduxHooks";
 import {
     fetchInstagramList,
@@ -10,6 +9,7 @@ import {
     resetInstagramState,
     clearInstagramMessages,
 } from "../slices/instagramSlice";
+import { Instagram } from "../types/instagram.type";
 
 export const useInstagram = () => {
     const dispatch = useAppDispatch();
@@ -41,10 +41,10 @@ export const useInstagram = () => {
     const getByBusinessId = (businessId: string) =>
         dispatch(fetchByBusinessId({ businessId }));
 
-    const createInstagramProfile = (payload: any) =>
+    const createInstagramProfile = (payload: Partial<Instagram>) =>
         dispatch(createInstagram({ payload }));
 
-    const updateInstagramProfile = (id: string, payload: any) =>
+    const updateInstagramProfile = (id: string, payload: Partial<Instagram>) =>
         dispatch(updateInstagram({ id, payload }));
 
     const removeInstagramProfile = (id: string) =>

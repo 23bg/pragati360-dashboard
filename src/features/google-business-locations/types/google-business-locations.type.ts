@@ -1,4 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { IGooglePost } from "@/features/google-posts/types/google-post.type";
+import { IGoogleReview } from "@/features/google-reviews/types/google-review.type";
+
 export interface IBusinessLocation {
     id: string;
     googleLocationId: string;
@@ -10,8 +12,8 @@ export interface IBusinessLocation {
     syncedAt?: string;
     createdAt: string;
     updatedAt: string;
-    posts?: any[];
-    reviews?: any[];
+    posts?: IGooglePost[];
+    reviews?: IGoogleReview[];
 }
 
 export interface IBusinessLocationListResponse {

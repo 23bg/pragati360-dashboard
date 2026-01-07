@@ -24,10 +24,10 @@ export default function GoogleReviewDetailPage({ id }: { id?: string }) {
             title="Review Details"
             showInitialLoadingOnly={false}
             isLoading={loading}
-            error={error}
+            error={error?.message}
             onRetry={() => id && getReviewById(id)}
             showBackButton
-            backHref={ROUTES.CONSOLE.REVIEWS}
+            backHref={selectedReview ? ROUTES.APP.BUSINESS.LOCATIONS.REVIEWS.ROOT(selectedReview.googleLocationId) : ROUTES.APP.ROOT}
             backLabel="Back to Reviews"
         >
             {loading && (

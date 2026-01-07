@@ -10,6 +10,6 @@ export default function page() {
     if (!userId) return <>No User</>
 
     return (
-        <div><UserDetailPage id={userId} /></div>
+        <div><UserDetailPage /></div>
     )
 }

@@ -1,4 +1,5 @@
 "use client";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -7,12 +8,6 @@ import {
     TicketFormData,
 } from "@/features/tickets/validations/ticket.validation";
 
-import {
-    Card,
-    CardHeader,
-    CardTitle,
-    CardContent,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -85,7 +80,7 @@ export function CreateTicketForm() {
             <div className="space-y-2">
                 <Label>Status</Label>
                 <Select
-                    onValueChange={(value) => setValue("status", value)}
+                    onValueChange={(value) => setValue("status", value as "open" | "in_progress" | "closed")}
                     defaultValue="open"
                 >
                     <SelectTrigger className="  ">
@@ -93,7 +88,7 @@ export function CreateTicketForm() {
                     </SelectTrigger>
                     <SelectContent className=" ">
                         <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in-progress">In Progress</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
                         <SelectItem value="closed">Closed</SelectItem>
                     </SelectContent>
                 </Select>
@@ -108,7 +103,7 @@ export function CreateTicketForm() {
             <div className="space-y-2">
                 <Label>Priority</Label>
                 <Select
-                    onValueChange={(value) => setValue("priority", value)}
+                    onValueChange={(value) => setValue("priority", value as "low" | "medium" | "high")}
                     defaultValue="medium"
                 >
                     <SelectTrigger className="  ">
@@ -118,7 +113,6 @@ export function CreateTicketForm() {
                         <SelectItem value="low">Low</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
                     </SelectContent>
                 </Select>
                 {errors.priority && (

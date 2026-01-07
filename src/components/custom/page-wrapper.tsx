@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -89,10 +89,12 @@ export default function PageWrapper({
   contentClassName = "",
 }: PageWrapperProps) {
 
-  const hasLoadedOnce = useRef(false);
+  const [showSkeleton, setShowSkeleton] = useState(true);
 
   useEffect(() => {
-    if (!isLoading) hasLoadedOnce.current = true;
+    if (!isLoading) {
+      setShowSkeleton(false);
+    }
   }, [isLoading]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,8 +120,7 @@ export default function PageWrapper({
     }
   };
 
-  // eslint-disable-next-line react-hooks/refs
-  if (isLoading && (!showInitialLoadingOnly || !hasLoadedOnce.current)) {
+  if (isLoading && showSkeleton && showInitialLoadingOnly) {
     // Default skeleton grid size
     const rows = 4;
     const columns = 1;

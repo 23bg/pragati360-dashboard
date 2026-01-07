@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from "@/shared/hooks/reduxHooks";
 import {
     fetchReviewsByLocation,
+    fetchReviewById,
     replyToGoogleReview,
     updateReviewReply,
     resetGoogleReviewState,
@@ -44,6 +45,8 @@ export const useGoogleReviews = () => {
             })
         );
 
+    const getReviewById = (id: string) => dispatch(fetchReviewById({ id }));
+
     // ------------------------------
     // Local Reducer Actions
     // ------------------------------
@@ -66,6 +69,7 @@ export const useGoogleReviews = () => {
 
         // Thunks
         getReviewsByLocation,
+        getReviewById,
         replyReview,
         updateReply,
 

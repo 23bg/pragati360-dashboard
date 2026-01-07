@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import { apiGet, apiPost, apiPatch, apiDelete } from "@/shared/lib/apiService";
 import { API } from "@/shared/constants";
-import { Instagram } from "../types/instagram.type";
+import { Instagram, InstagramListResponse } from "../types/instagram.type";
+import { AppError } from "@/shared/types/api";
 
 // ----------------------------------
 // State Interface
@@ -11,7 +11,7 @@ interface InstagramState {
     profiles: Instagram[];
     currentProfile: Instagram | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     successMessage: string | null;
 }
 
@@ -27,111 +27,97 @@ const initialState: InstagramState = {
 };
 
 // ----------------------------------
+// Thunk Argument Types
+// ----------------------------------
+interface FetchListParams {
+    username?: string;
+    businessId?: string;
+    search?: string;
+    sort?: string;
+    page?: number;
+    limit?: number;
+}
+
+interface UpdateParams {
+    id: string;
+    payload: Partial<Instagram>;
+}
+
+
+// ----------------------------------
 // Async Thunks
 // ----------------------------------
 
-// ✅ Fetch List of Profiles
 export const fetchInstagramList = createAsyncThunk<
-    Instagram[],
-    {
-        username?: string;
-        businessId?: string;
-        search?: string;
-        sort?: string;
-        page?: number;
-        limit?: number;
-    },
-    { rejectValue: string }
+    InstagramListResponse,
+    FetchListParams | undefined,
+    { rejectValue: AppError }
 >("instagram/fetchList", async (params, { rejectWithValue }) => {
     try {
-        const response = await api.get(API.INSTAGRAM.LIST, { params });
-        return response.data.data.profiles as Instagram[];
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to fetch Instagram profiles.";
-        return rejectWithValue(message);
+        return await apiGet<InstagramListResponse>(API.INSTAGRAM.LIST + (params ? `?${new URLSearchParams(params as Record<string, string>).toString()}` : ''));
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Fetch Instagram by ID
 export const fetchInstagramById = createAsyncThunk<
     Instagram,
     { id: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("instagram/fetchById", async ({ id }, { rejectWithValue }) => {
     try {
-        const response = await api.get(API.INSTAGRAM.GET(id));
-        return response.data.data as Instagram;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message ||
-            "Failed to fetch Instagram profile by ID.";
-        return rejectWithValue(message);
+        return await apiGet<Instagram>(API.INSTAGRAM.GET(id));
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Fetch Profile by Business ID
 export const fetchByBusinessId = createAsyncThunk<
     Instagram,
     { businessId: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("instagram/fetchByBusinessId", async ({ businessId }, { rejectWithValue }) => {
     try {
-        const response = await api.get(API.INSTAGRAM.GET_BY_BUSINESS(businessId));
-        return response.data.data as Instagram;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message ||
-            "Failed to fetch Instagram profile by businessId.";
-        return rejectWithValue(message);
+        return await apiGet<Instagram>(API.INSTAGRAM.GET_BY_BUSINESS(businessId));
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Create Instagram Profile
 export const createInstagram = createAsyncThunk<
     Instagram,
     { payload: Partial<Instagram> },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("instagram/create", async ({ payload }, { rejectWithValue }) => {
     try {
-        const response = await api.post(API.INSTAGRAM.CREATE, payload);
-        return response.data.data as Instagram;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to create Instagram profile.";
-        return rejectWithValue(message);
+        return await apiPost<Instagram>(API.INSTAGRAM.CREATE, payload);
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Update Instagram Profile
 export const updateInstagram = createAsyncThunk<
     Instagram,
-    { id: string; payload: Partial<Instagram> },
-    { rejectValue: string }
+    UpdateParams,
+    { rejectValue: AppError }
 >("instagram/update", async ({ id, payload }, { rejectWithValue }) => {
     try {
-        const response = await api.patch(API.INSTAGRAM.UPDATE(id), payload);
-        return response.data.data as Instagram;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to update Instagram profile.";
-        return rejectWithValue(message);
+        return await apiPatch<Instagram>(API.INSTAGRAM.UPDATE(id), payload);
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Delete / Disconnect Instagram Profile
 export const deleteInstagram = createAsyncThunk<
-    Instagram,
+    string, // return id on success
     { id: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("instagram/delete", async ({ id }, { rejectWithValue }) => {
     try {
-        const response = await api.delete(API.INSTAGRAM.DELETE(id));
-        return response.data.data as Instagram;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to delete Instagram profile.";
-        return rejectWithValue(message);
+        await apiDelete(API.INSTAGRAM.DELETE(id));
+        return id;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
@@ -150,149 +136,95 @@ const instagramSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // ------------------------------
             // FETCH LIST
-            // ------------------------------
             .addCase(fetchInstagramList.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchInstagramList.fulfilled,
-                (state, action: PayloadAction<Instagram[]>) => {
-                    state.loading = false;
-                    state.profiles = action.payload;
-                }
-            )
-            .addCase(
-                fetchInstagramList.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to load Instagram profiles list.";
-                }
-            )
+            .addCase(fetchInstagramList.fulfilled, (state, action: PayloadAction<InstagramListResponse>) => {
+                state.loading = false;
+                state.profiles = action.payload.profiles;
+            })
+            .addCase(fetchInstagramList.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-            // ------------------------------
             // FETCH BY ID
-            // ------------------------------
             .addCase(fetchInstagramById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchInstagramById.fulfilled,
-                (state, action: PayloadAction<Instagram>) => {
-                    state.loading = false;
-                    state.currentProfile = action.payload;
-                }
-            )
-            .addCase(
-                fetchInstagramById.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to load Instagram profile by ID.";
-                }
-            )
+            .addCase(fetchInstagramById.fulfilled, (state, action: PayloadAction<Instagram>) => {
+                state.loading = false;
+                state.currentProfile = action.payload;
+            })
+            .addCase(fetchInstagramById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-            // ------------------------------
             // FETCH BY BUSINESS ID
-            // ------------------------------
             .addCase(fetchByBusinessId.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchByBusinessId.fulfilled,
-                (state, action: PayloadAction<Instagram>) => {
-                    state.loading = false;
-                    state.currentProfile = action.payload;
-                }
-            )
-            .addCase(
-                fetchByBusinessId.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload ||
-                        "Failed to load Instagram profile by businessId.";
-                }
-            )
+            .addCase(fetchByBusinessId.fulfilled, (state, action: PayloadAction<Instagram>) => {
+                state.loading = false;
+                state.currentProfile = action.payload;
+            })
+            .addCase(fetchByBusinessId.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-            // ------------------------------
             // CREATE PROFILE
-            // ------------------------------
             .addCase(createInstagram.pending, (state) => {
                 state.loading = true;
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(
-                createInstagram.fulfilled,
-                (state, action: PayloadAction<Instagram>) => {
-                    state.loading = false;
-                    state.successMessage = "Instagram profile created successfully.";
-                    state.currentProfile = action.payload;
-                }
-            )
-            .addCase(
-                createInstagram.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to create Instagram profile.";
-                }
-            )
+            .addCase(createInstagram.fulfilled, (state, action: PayloadAction<Instagram>) => {
+                state.loading = false;
+                state.successMessage = "Instagram profile created successfully.";
+                state.currentProfile = action.payload;
+            })
+            .addCase(createInstagram.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-            // ------------------------------
             // UPDATE PROFILE
-            // ------------------------------
             .addCase(updateInstagram.pending, (state) => {
                 state.loading = true;
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(
-                updateInstagram.fulfilled,
-                (state, action: PayloadAction<Instagram>) => {
-                    state.loading = false;
-                    state.currentProfile = action.payload;
-                    state.successMessage = "Instagram profile updated successfully.";
-                }
-            )
-            .addCase(
-                updateInstagram.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to update Instagram profile.";
-                }
-            )
+            .addCase(updateInstagram.fulfilled, (state, action: PayloadAction<Instagram>) => {
+                state.loading = false;
+                state.currentProfile = action.payload;
+                state.successMessage = "Instagram profile updated successfully.";
+            })
+            .addCase(updateInstagram.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-            // ------------------------------
             // DELETE PROFILE
-            // ------------------------------
             .addCase(deleteInstagram.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                deleteInstagram.fulfilled,
-                (state) => {
-                    state.loading = false;
-                    state.currentProfile = null;
-                    state.successMessage = "Instagram profile disconnected successfully.";
-                }
-            )
-            .addCase(
-                deleteInstagram.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to delete Instagram profile.";
-                }
-            );
+            .addCase(deleteInstagram.fulfilled, (state, action: PayloadAction<string>) => {
+                state.loading = false;
+                state.currentProfile = null;
+                state.profiles = state.profiles.filter(p => p.id !== action.payload);
+                state.successMessage = "Instagram profile disconnected successfully.";
+            })
+            .addCase(deleteInstagram.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            });
     },
 });
 

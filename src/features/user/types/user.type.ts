@@ -18,16 +18,16 @@ export interface User {
         access_token?: string;
         refresh_token?: string;
         expires_in?: number;
+        created_at?: number; // Added created_at
         scope?: string;
         token_type?: string;
         id_token?: string;
-        [key: string]: any; // in case Google adds more fields
-    };
+    } & Record<string, unknown>; // Allow for other fields
 
     instagramOAuthTokens?: {
         access_token?: string;
         user_id?: string | number;
         expires_in?: number;
-        [key: string]: any; // IG sometimes adds fields
-    };
+        created_at?: number; // Added created_at
+    } & Record<string, unknown>; // Allow for other fields
 }

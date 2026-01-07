@@ -1,3 +1,6 @@
+import { IGoogleLocation } from "@/features/google-business-locations/types/google-location.type";
+import { IGoogleAccount } from "@/shared/types/google-account.type";
+
 export interface IGoogleReview {
     id: string; // ObjectId
     googleReviewId: string; // unique from Google

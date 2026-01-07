@@ -70,7 +70,7 @@ export default function InstagramListPage() {
             // searchValue={inputQuery}
             // onSearchChange={setInputQuery}
             isLoading={loading || !delayedRender}
-            error={error}
+            error={error?.message}
             onRetry={() => getInstagramList()}
         // showExport
         // showRefresh

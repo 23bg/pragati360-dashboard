@@ -5,15 +5,15 @@ import { useEffect } from "react";
 import PageWrapper from "@/components/custom/page-wrapper";
 import ROUTES from "@/shared/constants/route";
 
-export default function LocationLayout({
-    children,
-    params,
-}: {
+interface LocationLayoutProps {
     children: React.ReactNode;
-    params: { locationId: string };
-}) {
+    params: { id: string; };
+}
+
+// @ts-ignore
+export default function LocationLayout({ children, params }: LocationLayoutProps) {
     const { getLocationById, currentLocation, loading, error } = useBusinessLocation();
-    const id = params.locationId;
+    const id = params.id;
 
     useEffect(() => {
         if (id) getLocationById(id);
@@ -24,7 +24,7 @@ export default function LocationLayout({
             showInitialLoadingOnly
             title={currentLocation?.name || "Location Details"}
             isLoading={loading}
-            error={error}
+            error={error?.message}
             showBackButton
             backHref={ROUTES.APP.BUSINESS.LOCATIONS.ROOT}
         >

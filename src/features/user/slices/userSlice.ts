@@ -1,19 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
-import { API } from "@/shared/constants";
-import { } from "@/shared/types";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+// Removed: apiGet, apiPut, API
 import { User } from "../types/user.type";
+import { AppError } from "@/shared/types/api"; // Keep AppError for other potential local error states
 
 // ------------------------------
 // State Interface
 // ------------------------------
 interface UserState {
     users: User[]; // For admin/all users list
-    currentUser: User | null; // For profile info
-    loading: boolean;
-    error: string | null;
-    successMessage: string | null;
+    // Removed: currentUser (now managed by RTK Query)
+    loading: boolean; // Keep for other potential local loading states if needed
+    error: any | null; // Keep for other potential local error states if needed (changed to any for flexibility)
+    successMessage: string | null; // Keep for other potential local success states if needed
 }
 
 // ------------------------------
@@ -21,55 +19,15 @@ interface UserState {
 // ------------------------------
 const initialState: UserState = {
     users: [],
-    currentUser: null,
+    // Removed: currentUser: null,
     loading: false,
     error: null,
     successMessage: null,
 };
 
-// ------------------------------
-// Async Thunks
-// ------------------------------
+// Removed: Thunk Argument Types (UpdateUserParams)
 
-// ✅ Get Current User (Profile)
-
-export const fetchCurrentUser = createAsyncThunk<
-    User,
-    void,
-    { rejectValue: string }
->("user/fetchCurrentUser", async (_, { rejectWithValue }) => {
-    try {
-        const response = await api.get(API.USERS.CURRENT_USER);
-        console.log(response.data.data)
-        return response.data.data as User;
-    } catch (error: any) {
-        console.error("Fetch current user error:", error);
-        const message =
-            error?.response?.data?.message || "Failed to fetch user profile.";
-        return rejectWithValue(message);
-    }
-});
-
-// ✅ Update User Profile
-export const updateUserProfile = createAsyncThunk<
-    User,
-    { id: string, payload: Partial<User> },
-    { rejectValue: string }
->("user/updateUserProfile", async ({ id, payload }, { rejectWithValue }) => {
-    try {
-        const response = await api.put(API.USERS.UPDATE(id), payload);
-        return response.data as User;
-    } catch (error: any) {
-        console.error("Update user error:", error);
-        const message =
-            error?.response?.data?.message || "Failed to update profile.";
-        return rejectWithValue(message);
-    }
-});
-
-
-
-
+// Removed: Async Thunks (fetchCurrentUser, updateUserProfile)
 
 // ------------------------------
 // Slice Definition
@@ -83,60 +41,10 @@ const userSlice = createSlice({
             state.error = null;
             state.successMessage = null;
         },
+        // If there are other actions that modify 'users' array, keep them.
+        // For now, only local state management actions are kept.
     },
-    extraReducers: (builder) => {
-        builder
-
-
-            // ------------------------------
-            // FETCH CURRENT USER
-            // ------------------------------
-            .addCase(fetchCurrentUser.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-            })
-            .addCase(
-                fetchCurrentUser.fulfilled,
-                (state, action: PayloadAction<User>) => {
-                    state.loading = false;
-                    state.currentUser = action.payload;
-                    state.error = null;
-                }
-            ).addCase(
-                fetchCurrentUser.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to load profile.";
-                }
-            )
-
-
-            // ------------------------------
-            // UPDATE USER PROFILE
-            // ------------------------------
-            .addCase(updateUserProfile.pending, (state) => {
-                state.loading = true;
-                state.error = null;
-                state.successMessage = null;
-            })
-            .addCase(
-                updateUserProfile.fulfilled,
-                (state, action: PayloadAction<User>) => {
-                    state.loading = false;
-                    state.currentUser = action.payload;
-                    state.successMessage = "Profile updated successfully.";
-                }
-            )
-            .addCase(
-                updateUserProfile.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to update profile.";
-                }
-            )
-
-
-    },
+    // Removed: extraReducers
 });
 
 // ------------------------------

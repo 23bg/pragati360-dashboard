@@ -13,10 +13,10 @@ import { getSubscriptionColumns } from "../utils/getSubscriptionColumns";
 
 export default function SubscriptionListPage() {
     const {
-        payments,
+        subscriptions,
         loading,
         error,
-        getPaymentsByUser,
+        getSubscriptionsByUser,
     } = useSubsciptions();
 
     const [inputQuery, setInputQuery] = React.useState("");
@@ -27,7 +27,7 @@ export default function SubscriptionListPage() {
 
     // Fetch payments for current user
     React.useEffect(() => {
-        getPaymentsByUser("me"); // or userId
+        getSubscriptionsByUser("me"); // or userId
     }, []);
 
     // Debounce search
@@ -44,16 +44,16 @@ export default function SubscriptionListPage() {
 
     // Local filtering
     const filteredData = React.useMemo(() => {
-        if (!payments || payments.length === 0) return [];
-        if (!searchQuery) return payments;
+        if (!subscriptions || subscriptions.length === 0) return [];
+        if (!searchQuery) return subscriptions;
 
         const query = searchQuery.toLowerCase();
-        return payments.filter((p: ISubsciption) =>
+        return subscriptions.filter((p: ISubsciption) =>
             p.status.toLowerCase().includes(query) ||
             p.paymentMethod?.toLowerCase().includes(query) ||
             p.description?.toLowerCase().includes(query)
         );
-    }, [searchQuery, payments]);
+    }, [searchQuery, subscriptions]);
 
     // Columns
     const columns = getSubscriptionColumns();
@@ -70,8 +70,8 @@ export default function SubscriptionListPage() {
             searchValue={inputQuery}
             onSearchChange={setInputQuery}
             isLoading={loading || !delayedRender}
-            error={error}
-            onRetry={() => getPaymentsByUser("me")}
+            error={error?.message}
+            onRetry={() => getSubscriptionsByUser("me")}
             showExport
             showRefresh
             showBackButton

@@ -30,7 +30,7 @@ export default function InstagramLayout({
 
                     {/* Loading & Error */}
                     {loading && <p className="text-center text-muted-foreground py-6">Loading...</p>}
-                    {error && <p className="text-center text-red-500 py-6">{error}</p>}
+                    {error && <p className="text-center text-red-500 py-6">{error.message}</p>}
 
                     {profile && (
                         <>

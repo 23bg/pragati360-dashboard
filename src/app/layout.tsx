@@ -4,6 +4,7 @@ import "./globals.css";
 import { ReduxProvider } from "@/shared/providers/ReduxProvider";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/sonner"
+import { ThemeProvider } from "@/shared/providers/theme-provider";
 
 // ✅ Load DM Sans (modern, balanced sans-serif)
 const dmSans = DM_Sans({
@@ -30,20 +31,24 @@ export default function RootLayout({
       <body
         className={`${dmSans.variable} font-sans antialiased `}
       >
-        <ReduxProvider>
-          <NextTopLoader
-            // showAtBottom={true}
-            showSpinner={false}
-            color="var(--color-blue-600)"
-            shadow={false}
+        <ThemeProvider>
 
-          />
-          <main>{children}</main>
-          <Toaster
-            duration={3000}
-            position={"bottom-right"}
-          />
-        </ReduxProvider>
+          <ReduxProvider>
+            <NextTopLoader
+              // showAtBottom={true}
+              showSpinner={false}
+              color="var(--color-blue-600)"
+              shadow={false}
+
+            />
+            <main>{children}</main>
+            <Toaster
+              duration={3000}
+              position={"bottom-right"}
+            />
+          </ReduxProvider>
+
+        </ThemeProvider>
       </body>
     </html>
   );

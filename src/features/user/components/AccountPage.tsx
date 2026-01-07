@@ -27,10 +27,12 @@ import { appToast } from "@/components/common/AppToaster";
 import UpdateUserForm from "./UpdateUserForm";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
+import { User } from "../types/user.type"; // Import User type
+
 // ---------------------------------------------------------
 // Helper
 // ---------------------------------------------------------
-function getRemainingTime(token?: any) {
+function getRemainingTime(token?: User['googleOAuthTokens'] | User['instagramOAuthTokens']) {
     if (!token?.expires_in || !token?.created_at) return null;
 
     const expiry = token.created_at + token.expires_in * 1000;
@@ -242,7 +244,16 @@ export default function AccountPage() {
 // ---------------------------------------------------------
 // Reusable Setting Switch Component
 // ---------------------------------------------------------
-function SettingSwitch({ label, description, icon, checked, onChange, toastOn }: any) {
+interface SettingSwitchProps {
+    label: string;
+    description: string;
+    icon: React.ReactNode;
+    checked?: boolean;
+    onChange: (checked: boolean) => void;
+    toastOn?: boolean;
+}
+
+function SettingSwitch({ label, description, icon, checked, onChange, toastOn }: SettingSwitchProps) {
     return (
         <div className="flex items-center justify-between p-4 rounded-lg border">
             <div>

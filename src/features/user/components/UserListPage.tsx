@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-// import { ListPageWrapper } from "@/components/custom/list-page-wrapper";
+import { ListPageWrapper } from "@/components/custom/list-page-wrapper";
 import { Receipt } from "lucide-react";
 // import useSubsciptions from "@/features/subscriptions/hooks/useSubsciption";
 
@@ -10,22 +10,18 @@ import { CommonTableComponent } from "@/components/common/common-table-component
 import PaginationControls from "@/components/common/PaginationControls";
 import { ISubsciption } from "@/features/subscriptions";
 import { getSubscriptionColumns } from "@/features/subscriptions/utils/getSubscriptionColumns";
-import { useUser } from "../hooks/useUser";
-import { User } from "@/shared/types";
-import { getUserColumns } from "../utils/userColunms";
-import { ListPageWrapper } from "@/components/custom/list-page-wrapper";
-import { Toaster } from "@/components/ui/sonner";
-import { toast } from "sonner";
+import { useUsers } from "../hooks/useUsers";
+import { User } from "../types/user.type";
+import { getUserColumns } from "../utils/userColumns";
 import { appToast } from "@/components/common/AppToaster";
-// import { ListPageWrapper } from "@/components/custom/page-wrapper";
 
 export default function UserListPage() {
     const {
         users,
         loading,
         error,
-        getUsers,
-    } = useUser();
+        getAllUsers,
+    } = useUsers();
 
     const [inputQuery, setInputQuery] = React.useState("");
     const [searchQuery, setSearchQuery] = React.useState("");
@@ -35,7 +31,7 @@ export default function UserListPage() {
 
     // Fetch payments for current user
     React.useEffect(() => {
-        getUsers(); // or userId
+        getAllUsers();
     }, []);
 
     // Debounce search

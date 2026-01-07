@@ -12,12 +12,8 @@ export const ticketFormSchema = z.object({
         .string()
         .min(5, "Description must be at least 5 characters long")
         .optional(),
-    status: z.enum(["open", "in_progress", "closed"], {
-        required_error: "Status is required",
-    }),
-    priority: z.enum(["low", "medium", "high"], {
-        required_error: "Priority is required",
-    }),
+    status: z.enum(["open", "in_progress", "closed"]),
+    priority: z.enum(["low", "medium", "high"]),
     assignedTo: z.string().optional(),
     createdBy: z.string().optional(),
 });

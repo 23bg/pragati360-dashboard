@@ -1,24 +1,28 @@
-// 'use client'
+"use client"
 
 import PageWrapper from "@/components/custom/page-wrapper"
-import data from "./data.json"
+// import data from "./data.json" // Remove this line
 
 import { ChartAreaInteractive } from '@/components/dashboard/chart-area-interactive'
 import { DataTable } from '@/components/dashboard/data-table'
 import { SectionCards } from '@/components/dashboard/section-cards'
 import { Metadata } from "next"
 import React from 'react'
+import { useGetDashboardStatsQuery } from "@/features/dashboard/services/dashboardApi" // Import the hook
 // import { metadata } from "../layout"
 
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description:
-    "Join StackOS early access - an AI-powered growth intelligence suite for modern businesses.",
-}
+
 
 
 export default function page() {
+  const { data, isLoading, isError } = useGetDashboardStatsQuery(); // Use the hook
+
+  // Handle loading and error states for the entire page if necessary,
+  // or let individual components handle it. PageWrapper already handles initial loading.
+
+  const tableData = data?.data?.tableData || []; // Extract tableData
+
   return (
     <PageWrapper
       title="Dashboard"
@@ -33,7 +37,8 @@ export default function page() {
             <div className="">
               <ChartAreaInteractive />
             </div>
-            <DataTable data={data} />
+            {/* Pass tableData to DataTable */}
+            <DataTable data={tableData} />
           </div>
         </div>
       </div>

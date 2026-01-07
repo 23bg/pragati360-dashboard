@@ -1,3 +1,6 @@
+import { IGoogleLocation } from "@/features/google-business-locations/types/google-location.type";
+import { IGoogleAccount } from "@/shared/types/google-account.type";
+
 export interface IGooglePost {
     id: string; // ObjectId
     googlePostId?: string | null; // Returned by Google

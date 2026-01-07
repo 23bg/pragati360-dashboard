@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
 import { ChevronDown } from "lucide-react";
+import { Table } from "@tanstack/react-table"; // Import Table type
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +10,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const ColumnVisibilityDropdown = ({ table }: any) => {
+interface ColumnVisibilityDropdownProps<TData> {
+  table: Table<TData>;
+}
+
+const ColumnVisibilityDropdown = <TData,>({ table }: ColumnVisibilityDropdownProps<TData>) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -21,8 +25,8 @@ const ColumnVisibilityDropdown = ({ table }: any) => {
       <DropdownMenuContent align="end">
         {table
           .getAllColumns()
-          .filter((column: any) => column.getCanHide())
-          .map((column: any) => (
+          .filter((column) => column.getCanHide())
+          .map((column) => (
             <DropdownMenuCheckboxItem
               key={column.id}
               className="capitalize"
@@ -33,7 +37,7 @@ const ColumnVisibilityDropdown = ({ table }: any) => {
             >
               {/* Show the actual header label instead of column.id */}
               {typeof column.columnDef.header === "function"
-                ? column.columnDef.header(column.getContext()) // If header is a function
+                ? React.createElement(column.columnDef.header as any, { column, table })
                 : column.columnDef.header}
             </DropdownMenuCheckboxItem>
           ))}

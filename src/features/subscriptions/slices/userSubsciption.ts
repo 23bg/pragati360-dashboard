@@ -1,79 +1,78 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import api, { handleApiCall } from "@/shared/lib/axios";
 import { API } from "@/shared/constants";
 import { ISubsciption } from "../types/subsciption.type";
+import { AppError } from "@/shared/types/api";
 
 // ------------------------------
 // State Interface
 // ------------------------------
-interface PaymentState {
-    payments: ISubsciption[];
-    currentPayment: ISubsciption | null;
+interface SubscriptionState {
+    subscriptions: ISubsciption[];
+    currentSubscription: ISubsciption | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     successMessage: string | null;
 }
 
 // ------------------------------
 // Initial State
 // ------------------------------
-const initialState: PaymentState = {
-    payments: [],
-    currentPayment: null,
+const initialState: SubscriptionState = {
+    subscriptions: [],
+    currentSubscription: null,
     loading: false,
     error: null,
     successMessage: null,
 };
 
 // ------------------------------
+// Thunk Argument Types
+// ------------------------------
+interface CreateSubscriptionParams {
+    payload: Partial<ISubsciption>;
+}
+
+// ------------------------------
 // Async Thunks
 // ------------------------------
 
-// 🚀 Fetch Payments for a User
-export const fetchPaymentsByUser = createAsyncThunk<
+export const fetchSubscriptionsByUser = createAsyncThunk<
     ISubsciption[],
     { userId: string },
-    { rejectValue: string }
->("payments/fetchByUser", async ({ userId }, { rejectWithValue }) => {
+    { rejectValue: AppError }
+>("subscriptions/fetchByUser", async ({ userId }, { rejectWithValue }) => {
     try {
-        const res = await api.get(API.SUBSCRIPTION.GET(userId));
-        return res.data.data as ISubsciption[];
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to load payments."
-        );
+        const data = await handleApiCall(api.get<ISubsciption[]>(API.SUBSCRIPTION.GET(userId)));
+        return data as ISubsciption[];
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// 🚀 Fetch Payment by ID
-export const fetchPaymentById = createAsyncThunk<
+export const fetchSubscriptionById = createAsyncThunk<
     ISubsciption,
     { id: string },
-    { rejectValue: string }
->("payments/fetchById", async ({ id }, { rejectWithValue }) => {
+    { rejectValue: AppError }
+>("subscriptions/fetchById", async ({ id }, { rejectWithValue }) => {
     try {
-        const res = await api.get(API.SUBSCRIPTION.GET(id));
-        return res.data.data as ISubsciption;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to load payment."
-        );
+        const data = await handleApiCall(api.get<ISubsciption>(API.SUBSCRIPTION.GET(id)));
+        return data as ISubsciption;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// 🚀 Create Payment (usually after Razorpay order create)
-export const createPayment = createAsyncThunk<
+export const createSubscription = createAsyncThunk<
     ISubsciption,
-    { payload: Partial<ISubsciption> },
-    { rejectValue: string }
->("payments/create", async ({ payload }, { rejectWithValue }) => {
+    CreateSubscriptionParams,
+    { rejectValue: AppError }
+>("subscriptions/create", async ({ payload }, { rejectWithValue }) => {
     try {
-        const res = await api.post(API.SUBSCRIPTION.CREATE, payload);
-        return res.data.data as ISubsciption;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to create payment."
-        );
+        const data = await handleApiCall(api.post<ISubsciption>(API.SUBSCRIPTION.CREATE, payload));
+        return data as ISubsciption;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
@@ -82,79 +81,61 @@ export const createPayment = createAsyncThunk<
 // ------------------------------
 // Slice
 // ------------------------------
-const subsciptionSlice = createSlice({
-    name: "payments",
+const subscriptionSlice = createSlice({
+    name: "subscriptions",
     initialState,
     reducers: {
-        resetPaymentState: () => initialState,
-        clearPaymentMessages: (state) => {
+        resetSubscriptionState: () => initialState,
+        clearSubscriptionMessages: (state) => {
             state.error = null;
             state.successMessage = null;
         },
-        setCurrentPayment: (state, action: PayloadAction<ISubsciption | null>) => {
-            state.currentPayment = action.payload;
+        setCurrentSubscription: (state, action: PayloadAction<ISubsciption | null>) => {
+            state.currentSubscription = action.payload;
         },
     },
 
     extraReducers: (builder) => {
         builder
             // FETCH BY USER
-            .addCase(fetchPaymentsByUser.pending, (state) => {
+            .addCase(fetchSubscriptionsByUser.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(
-                fetchPaymentsByUser.fulfilled,
-                (state, action: PayloadAction<ISubsciption[]>) => {
-                    state.loading = false;
-                    state.payments = action.payload;
-                }
-            )
-            .addCase(
-                fetchPaymentsByUser.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to fetch payments.";
-                }
-            )
+            .addCase(fetchSubscriptionsByUser.fulfilled, (state, action: PayloadAction<ISubsciption[]>) => {
+                state.loading = false;
+                state.subscriptions = action.payload;
+            })
+            .addCase(fetchSubscriptionsByUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to fetch subscriptions." };
+            })
 
             // FETCH BY ID
-            .addCase(fetchPaymentById.pending, (state) => {
+            .addCase(fetchSubscriptionById.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(
-                fetchPaymentById.fulfilled,
-                (state, action: PayloadAction<ISubsciption>) => {
-                    state.loading = false;
-                    state.currentPayment = action.payload;
-                }
-            )
-            .addCase(
-                fetchPaymentById.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to load payment.";
-                }
-            )
+            .addCase(fetchSubscriptionById.fulfilled, (state, action: PayloadAction<ISubsciption>) => {
+                state.loading = false;
+                state.currentSubscription = action.payload;
+            })
+            .addCase(fetchSubscriptionById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to load subscription." };
+            })
 
             // CREATE
-            .addCase(createPayment.pending, (state) => {
+            .addCase(createSubscription.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(
-                createPayment.fulfilled,
-                (state, action: PayloadAction<ISubsciption>) => {
-                    state.loading = false;
-                    state.payments.push(action.payload);
-                    state.successMessage = "Payment created successfully.";
-                }
-            )
-            .addCase(
-                createPayment.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to create payment.";
-                }
-            )
+            .addCase(createSubscription.fulfilled, (state, action: PayloadAction<ISubsciption>) => {
+                state.loading = false;
+                state.subscriptions.push(action.payload);
+                state.successMessage = "Subscription created successfully.";
+            })
+            .addCase(createSubscription.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to create subscription." };
+            })
     },
 });
 
@@ -162,9 +143,9 @@ const subsciptionSlice = createSlice({
 // Exports
 // ------------------------------
 export const {
-    resetPaymentState,
-    clearPaymentMessages,
-    setCurrentPayment,
-} = subsciptionSlice.actions;
+    resetSubscriptionState,
+    clearSubscriptionMessages,
+    setCurrentSubscription,
+} = subscriptionSlice.actions;
 
-export default subsciptionSlice.reducer;
+export default subscriptionSlice.reducer;

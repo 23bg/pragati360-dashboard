@@ -32,7 +32,7 @@ export default function InstagramDetailPage() {
                         )}
 
                         {error && (
-                            <p className="text-center py-10 text-red-500">{error}</p>
+                            <p className="text-center py-10 text-red-500">{error.message}</p>
                         )}
 
                         {profile && (

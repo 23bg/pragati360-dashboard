@@ -48,11 +48,7 @@ export const CreateGooglePostForm: React.FC<CreateGooglePostFormProps> = ({
     }, [successMessage]);
 
     const onSubmit = (values: GooglePostFormType) => {
-        createPost({
-            ...values,
-            googleLocationId: locationId,
-            googleAccountId: accountId,
-        });
+        // createPost();
     };
 
     return (
@@ -108,7 +104,7 @@ export const CreateGooglePostForm: React.FC<CreateGooglePostFormProps> = ({
                                 key={i}
                                 value={url}
                                 onChange={(e) => {
-                                    const updated = [...form.getValues("mediaUrls")];
+                                    const updated = [...(form.getValues("mediaUrls") || [])];
                                     updated[i] = e.target.value;
                                     form.setValue("mediaUrls", updated);
                                 }}
@@ -121,7 +117,7 @@ export const CreateGooglePostForm: React.FC<CreateGooglePostFormProps> = ({
                             type="button"
                             variant="secondary"
                             onClick={() =>
-                                form.setValue("mediaUrls", [...form.getValues("mediaUrls"), ""])
+                                form.setValue("mediaUrls", [...(form.getValues("mediaUrls") || []), ""])
                             }
                         >
                             + Add Image URL
@@ -149,7 +145,7 @@ export const CreateGooglePostForm: React.FC<CreateGooglePostFormProps> = ({
                         </div>
                     </div>
 
-                    {error && <p className="text-red-400 text-sm">{error}</p>}
+                    {error && <p className="text-red-400 text-sm">{error.message}</p>}
 
                     <Button
                         type="submit"

@@ -1,20 +1,19 @@
 "use client"
 
-import * as React from "react"
 import {
     CreditCard,
-
     Phone,
     SquareTerminal,
-
     MessageCircleQuestion,
     LucideInstagram,
-
     UserCircle,
-
     StoreIcon,
     Home,
     Workflow,
+    BellRing, // For Alerts
+    Activity, // For Activity & Logs
+    ShieldCheck, // For Account Security
+    HardDrive, // For Account Devices
 } from "lucide-react"
 
 
@@ -67,6 +66,16 @@ export function DashboardAppSidebar({ ...props }: React.ComponentProps<typeof Si
                 icon: Home,
                 // isActive: true,
             },
+            {
+                title: "Alerts",
+                url: ROUTES.APP.ALERTS,
+                icon: BellRing,
+            },
+            {
+                title: "Activity & Logs",
+                url: ROUTES.APP.ACTIVITY_LOGS,
+                icon: Activity,
+            },
         ],
 
         navMain: [
@@ -95,10 +104,23 @@ export function DashboardAppSidebar({ ...props }: React.ComponentProps<typeof Si
                 url: ROUTES.APP.INTEGRATIONS,
                 icon: Workflow,
             },
+        ],
+
+        account: [
             {
-                title: "Account",
+                title: "Profile",
                 url: ROUTES.APP.ACCOUNT,
-                icon: UserCircle, // standard and clean
+                icon: UserCircle,
+            },
+            {
+                title: "Security",
+                url: ROUTES.APP.ACCOUNT_SECURITY,
+                icon: ShieldCheck,
+            },
+            {
+                title: "Devices",
+                url: ROUTES.APP.ACCOUNT_DEVICES,
+                icon: HardDrive,
             },
         ],
 
@@ -123,10 +145,8 @@ export function DashboardAppSidebar({ ...props }: React.ComponentProps<typeof Si
                 <SidebarGroup>
                     <SidebarMenu>
                         <SidebarMenuItem >
-                            <SidebarMenuButton asChild>
-                                <Link href={'/dashboard'} className="flex items-center gap-2">
-                                    {/* <img src={logo} height={25} width={25} alt={""} /> */}
-
+                            <SidebarMenuButton >
+                                <Link href={ROUTES.APP.ROOT} className="flex items-center gap-2">
                                     <span className="text-xl font-semibold text-blue-600">Pragati360</span>
                                 </Link>
                             </SidebarMenuButton>
@@ -138,12 +158,10 @@ export function DashboardAppSidebar({ ...props }: React.ComponentProps<typeof Si
 
 
                 <NavMain items={withActiveFlag(data.Overview)} menuTitle="Overview" />
-                <NavMain items={withActiveFlag(data.navMain)} menuTitle="Menus" />
+                <NavMain items={withActiveFlag(data.navMain)} menuTitle="Modules" />
+                <NavMain items={withActiveFlag(data.account)} menuTitle="Account" />
                 <NavMain items={withActiveFlag(data.support)} menuTitle="Support" />
             </SidebarContent>
-
-
-
         </Sidebar>
     )
 }

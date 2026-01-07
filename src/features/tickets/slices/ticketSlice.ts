@@ -1,15 +1,17 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { API } from "@/shared/constants";
 import { Ticket } from "@/features/tickets/types/ticket.type";
+import { AppError } from "@/shared/types/api";
+import api, { handleApiCall } from "@/shared/lib/axios";
 
 // ------------------------------
 // State Interface
 // ------------------------------
 interface TicketState {
+    tickets: Ticket[];
     currentTicket: Ticket | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     successMessage: string | null;
 }
 
@@ -17,29 +19,34 @@ interface TicketState {
 // Initial State
 // ------------------------------
 const initialState: TicketState = {
+    tickets: [],
     currentTicket: null,
     loading: false,
     error: null,
     successMessage: null,
 };
 
+// ------------------------------
+// Thunk Argument Types
+// ------------------------------
+interface CreateTicketParams {
+    payload: Partial<Ticket>;
+}
 
+// ------------------------------
+// Async Thunks
+// ------------------------------
 
-
-// ✅ Create new ticket
 export const createTicket = createAsyncThunk<
     Ticket,
-    { payload: Partial<Ticket> },
-    { rejectValue: string }
+    CreateTicketParams,
+    { rejectValue: AppError }
 >("ticket/create", async ({ payload }, { rejectWithValue }) => {
     try {
-        const response = await api.post(API.TICKETS.CREATE, payload);
-        return response.data.data as Ticket;
-    } catch (error: any) {
-        console.error("Create ticket error:", error);
-        const message =
-            error?.response?.data?.message || "Failed to create ticket.";
-        return rejectWithValue(message);
+        const data = await handleApiCall(api.post<Ticket>(API.TICKETS.CREATE, payload));
+        return data as Ticket;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
@@ -58,21 +65,21 @@ const ticketSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-
             // CREATE
             .addCase(createTicket.pending, (state) => {
                 state.loading = true;
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(createTicket.fulfilled, (state, action) => {
+            .addCase(createTicket.fulfilled, (state, action: PayloadAction<Ticket>) => {
                 state.loading = false;
                 state.tickets.unshift(action.payload);
+                state.currentTicket = action.payload;
                 state.successMessage = "Ticket created successfully.";
             })
             .addCase(createTicket.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload || "Failed to create ticket.";
+                state.error = action.payload || { message: "Failed to create ticket." };
             })
 
     },
@@ -83,3 +90,5 @@ const ticketSlice = createSlice({
 // ------------------------------
 export const { resetTicketState, clearTicketMessages } = ticketSlice.actions;
 export default ticketSlice.reducer;
+
+

@@ -14,3 +14,12 @@ export interface Instagram {
     createdAt: string;  // ISO date string
     updatedAt: string;  // ISO date string
 }
+
+export interface InstagramListResponse {
+    profiles: Instagram[];
+    total: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+}
+

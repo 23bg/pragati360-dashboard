@@ -68,7 +68,7 @@ export default function GoogleReviewListPage({ locationId }: { locationId: strin
             searchValue={inputQuery}
             onSearchChange={setInputQuery}
             isLoading={loading || !delayedRender}
-            error={error}
+            error={error?.message}
             onRetry={() => locationId && getReviewsByLocation(locationId)}
             showBackButton
         // backHref="/console/locations"

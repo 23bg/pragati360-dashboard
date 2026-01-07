@@ -67,8 +67,12 @@ const ROUTES = {
         TEMPLATES: "/templates",
 
         ACCOUNT: "/account",
+        ACCOUNT_SECURITY: "/account/security",
+        ACCOUNT_DEVICES: "/account/devices",
         INTEGRATIONS: "/integrations",
 
+        ALERTS: "/alerts",
+        ACTIVITY_LOGS: "/activity-logs",
 
         HELP_CENTER: "/help-center",
         FAQs: "/faqs",

@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import api, { handleApiCall } from "@/shared/lib/axios";
 import { API } from "@/shared/constants";
 import { IGoogleReview } from "@/features/google-reviews/types/google-review.type";
+import { AppError } from "@/shared/types/api";
 
 // ------------------------------
 // State Interface
@@ -10,7 +11,7 @@ interface GoogleReviewState {
     reviews: IGoogleReview[];
     selectedReview: IGoogleReview | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     successMessage: string | null;
 }
 
@@ -26,54 +27,72 @@ const initialState: GoogleReviewState = {
 };
 
 // ------------------------------
+// Thunk Argument Types
+// ------------------------------
+interface ReplyParams {
+    reviewId: string;
+    payload: { replyText: string; replyUserId?: string };
+}
+
+interface UpdateReplyParams {
+    reviewId: string;
+    payload: { replyText: string };
+}
+
+
+// ------------------------------
 // Async Thunks
 // ------------------------------
 
-// ✅ Fetch Reviews by Location
+export const fetchReviewById = createAsyncThunk<
+    IGoogleReview,
+    { id: string },
+    { rejectValue: AppError }
+>("googleReviews/fetchById", async ({ id }, { rejectWithValue }) => {
+    try {
+        const data = await handleApiCall(api.get<IGoogleReview>(API.GOOGLE_BUSINESS.REVIEW.GET(id)));
+        return data as IGoogleReview;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
+    }
+});
+
 export const fetchReviewsByLocation = createAsyncThunk<
     IGoogleReview[],
     { locationId: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("googleReviews/fetchByLocation", async ({ locationId }, { rejectWithValue }) => {
     try {
-        const res = await api.get(API.GOOGLE.REVIEW.BY_LOCATION(locationId));
-        return res.data.data as IGoogleReview[];
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to fetch Google Reviews.";
-        return rejectWithValue(message);
+        const data = await handleApiCall(api.get<IGoogleReview[]>(API.GOOGLE_BUSINESS.REVIEW.BY_LOCATION(locationId)));
+        return data as IGoogleReview[];
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ✅ Reply to Google Review
 export const replyToGoogleReview = createAsyncThunk<
     IGoogleReview,
-    { reviewId: string; payload: { replyText: string; replyUserId?: string } },
-    { rejectValue: string }
+    ReplyParams,
+    { rejectValue: AppError }
 >("googleReviews/reply", async ({ reviewId, payload }, { rejectWithValue }) => {
     try {
-        const res = await api.post(API.GOOGLE.REVIEW.REPLY(reviewId), payload);
-        return res.data.data as IGoogleReview;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to reply to review.";
-        return rejectWithValue(message);
+        const data = await handleApiCall(api.post<IGoogleReview>(API.GOOGLE_BUSINESS.REVIEW.REPLY(reviewId), payload));
+        return data as IGoogleReview;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// ❗ Optional: Update existing reply
 export const updateReviewReply = createAsyncThunk<
     IGoogleReview,
-    { reviewId: string; payload: { replyText: string } },
-    { rejectValue: string }
+    UpdateReplyParams,
+    { rejectValue: AppError }
 >("googleReviews/updateReply", async ({ reviewId, payload }, { rejectWithValue }) => {
     try {
-        const res = await api.put(API.GOOGLE.REVIEW.UPDATE_REPLY(reviewId), payload);
-        return res.data.data as IGoogleReview;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Failed to update review reply.";
-        return rejectWithValue(message);
+        const data = await handleApiCall(api.put<IGoogleReview>(API.GOOGLE_BUSINESS.REVIEW.UPDATE_REPLY(reviewId), payload));
+        return data as IGoogleReview;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
@@ -96,80 +115,66 @@ const googleReviewSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
-            // ------------------------------
+            // FETCH REVIEW BY ID
+            .addCase(fetchReviewById.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                state.selectedReview = null; // Clear previous selected review
+            })
+            .addCase(fetchReviewById.fulfilled, (state, action: PayloadAction<IGoogleReview>) => {
+                state.loading = false;
+                state.selectedReview = action.payload;
+            })
+            .addCase(fetchReviewById.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to fetch review." };
+            })
+
             // FETCH REVIEWS
-            // ------------------------------
             .addCase(fetchReviewsByLocation.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchReviewsByLocation.fulfilled,
-                (state, action: PayloadAction<IGoogleReview[]>) => {
-                    state.loading = false;
-                    state.reviews = action.payload;
-                }
-            )
-            .addCase(
-                fetchReviewsByLocation.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error =
-                        action.payload || "Failed to fetch reviews for this location.";
-                }
-            )
+            .addCase(fetchReviewsByLocation.fulfilled, (state, action: PayloadAction<IGoogleReview[]>) => {
+                state.loading = false;
+                state.reviews = action.payload;
+            })
+            .addCase(fetchReviewsByLocation.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to fetch reviews for this location." };
+            })
 
-            // ------------------------------
             // CREATE REPLY
-            // ------------------------------
             .addCase(replyToGoogleReview.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                replyToGoogleReview.fulfilled,
-                (state, action: PayloadAction<IGoogleReview>) => {
-                    state.loading = false;
-                    const index = state.reviews.findIndex(
-                        (r) => r.id === action.payload.id
-                    );
-                    if (index !== -1) state.reviews[index] = action.payload;
-                    state.successMessage = "Reply posted successfully.";
-                }
-            )
-            .addCase(
-                replyToGoogleReview.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to reply to review.";
-                }
-            )
+            .addCase(replyToGoogleReview.fulfilled, (state, action: PayloadAction<IGoogleReview>) => {
+                state.loading = false;
+                const index = state.reviews.findIndex((r) => r.id === action.payload.id);
+                if (index !== -1) state.reviews[index] = action.payload;
+                state.successMessage = "Reply posted successfully.";
+            })
+            .addCase(replyToGoogleReview.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to reply to review." };
+            })
 
-            // ------------------------------
             // UPDATE REPLY
-            // ------------------------------
             .addCase(updateReviewReply.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                updateReviewReply.fulfilled,
-                (state, action: PayloadAction<IGoogleReview>) => {
-                    state.loading = false;
-                    const index = state.reviews.findIndex(
-                        (r) => r.id === action.payload.id
-                    );
-                    if (index !== -1) state.reviews[index] = action.payload;
-                    state.successMessage = "Reply updated successfully.";
-                }
-            )
-            .addCase(
-                updateReviewReply.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Failed to update reply.";
-                }
-            );
+            .addCase(updateReviewReply.fulfilled, (state, action: PayloadAction<IGoogleReview>) => {
+                state.loading = false;
+                const index = state.reviews.findIndex((r) => r.id === action.payload.id);
+                if (index !== -1) state.reviews[index] = action.payload;
+                state.successMessage = "Reply updated successfully.";
+            })
+            .addCase(updateReviewReply.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || { message: "Failed to update reply." };
+            });
     },
 });
 

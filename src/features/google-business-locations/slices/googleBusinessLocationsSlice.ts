@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import api, { handleApiCall } from "@/shared/lib/axios";
 import { API } from "@/shared/constants";
 import {
     IBusinessLocation,
     IBusinessLocationListResponse,
 } from "../types/google-business-locations.type";
+import { AppError } from "@/shared/types/api";
 
 // ------------------------------
 // State Interface
@@ -14,7 +14,7 @@ interface BusinessLocationState {
     locations: IBusinessLocation[];
     currentLocation: IBusinessLocation | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     successMessage: string | null;
     total: number;
     totalPages: number;
@@ -38,70 +38,72 @@ const initialState: BusinessLocationState = {
 };
 
 // ------------------------------
+// Thunk Argument Types
+// ------------------------------
+interface FetchListParams {
+    page?: number;
+    limit?: number;
+    search?: string;
+}
+
+interface UpdateParams {
+    id: string;
+    data: Partial<IBusinessLocation>;
+}
+
+// ------------------------------
 // Async Thunks
 // ------------------------------
 
-// 📌 Fetch location list
 export const fetchBusinessLocationList = createAsyncThunk<
     IBusinessLocationListResponse,
-    any,
-    { rejectValue: string }
+    FetchListParams,
+    { rejectValue: AppError }
 >("businessLocation/fetchList", async (params, { rejectWithValue }) => {
     try {
-        const res = await api.get(API.GOOGLE_BUSINESS.LOCATION.GET_ALL, { params });
-        return res.data.data;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to fetch business locations."
-        );
+        const data = await handleApiCall(api.get<IBusinessLocationListResponse>(API.GOOGLE_BUSINESS.LOCATION.GET_ALL, { params }));
+        return data as IBusinessLocationListResponse;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// 📌 Fetch location by ID
 export const fetchBusinessLocationById = createAsyncThunk<
     IBusinessLocation,
     { id: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("businessLocation/fetchById", async ({ id }, { rejectWithValue }) => {
     try {
-        const res = await api.get(API.GOOGLE_BUSINESS.LOCATION.GET(id));
-        return res.data;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to fetch business location."
-        );
+        const data = await handleApiCall(api.get<IBusinessLocation>(API.GOOGLE_BUSINESS.LOCATION.GET(id)));
+        return data as IBusinessLocation;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// 📌 Update location
 export const updateBusinessLocation = createAsyncThunk<
     IBusinessLocation,
-    { id: string; data: any },
-    { rejectValue: string }
->("businessLocation/update", async ({ id, data }, { rejectWithValue }) => {
+    UpdateParams,
+    { rejectValue: AppError }
+>("businessLocation/update", async ({ id, data: payload }, { rejectWithValue }) => {
     try {
-        const res = await api.put(API.GOOGLE_BUSINESS.LOCATION.UPDATE(id), data);
-        return res.data;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to update business location."
-        );
+        const data = await handleApiCall(api.put<IBusinessLocation>(API.GOOGLE_BUSINESS.LOCATION.UPDATE(id), payload));
+        return data as IBusinessLocation;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// 📌 Delete location
 export const deleteBusinessLocation = createAsyncThunk<
-    { message: string },
+    string, // Returns ID of deleted location
     { id: string },
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("businessLocation/delete", async ({ id }, { rejectWithValue }) => {
     try {
-        const res = await api.delete(API.GOOGLE_BUSINESS.LOCATION.DELETE(id));
-        return res.data;
-    } catch (error: any) {
-        return rejectWithValue(
-            error?.response?.data?.message || "Failed to delete business location."
-        );
+        await handleApiCall(api.delete(API.GOOGLE_BUSINESS.LOCATION.DELETE(id)));
+        return id;
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
@@ -120,87 +122,67 @@ const businessLocationSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
-            // ------------------------------
             // FETCH LIST
-            // ------------------------------
             .addCase(fetchBusinessLocationList.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchBusinessLocationList.fulfilled,
-                (state, action: PayloadAction<IBusinessLocationListResponse>) => {
-                    state.loading = false;
-                    state.locations = action.payload.locations;
-                    state.total = action.payload.total;
-                    state.totalPages = action.payload.totalPages;
-                    state.currentPage = action.payload.currentPage;
-                    state.pageSize = action.payload.pageSize;
-                }
-            )
+            .addCase(fetchBusinessLocationList.fulfilled, (state, action: PayloadAction<IBusinessLocationListResponse>) => {
+                state.loading = false;
+                state.locations = action.payload.locations;
+                state.total = action.payload.total;
+                state.totalPages = action.payload.totalPages;
+                state.currentPage = action.payload.currentPage;
+                state.pageSize = action.payload.pageSize;
+            })
             .addCase(fetchBusinessLocationList.rejected, (state, action) => {
                 state.loading = false;
-                state.error =
-                    action.payload || "Failed to load business locations.";
+                state.error = action.payload || { message: "Failed to load business locations." };
             })
 
-            // ------------------------------
             // FETCH BY ID
-            // ------------------------------
             .addCase(fetchBusinessLocationById.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                fetchBusinessLocationById.fulfilled,
-                (state, action: PayloadAction<IBusinessLocation>) => {
-                    state.loading = false;
-                    state.currentLocation = action.payload;
-                }
-            )
+            .addCase(fetchBusinessLocationById.fulfilled, (state, action: PayloadAction<IBusinessLocation>) => {
+                state.loading = false;
+                state.currentLocation = action.payload;
+            })
             .addCase(fetchBusinessLocationById.rejected, (state, action) => {
                 state.loading = false;
-                state.error =
-                    action.payload || "Failed to fetch business location.";
+                state.error = action.payload || { message: "Failed to fetch business location." };
             })
 
-            // ------------------------------
             // UPDATE
-            // ------------------------------
             .addCase(updateBusinessLocation.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(
-                updateBusinessLocation.fulfilled,
-                (state, action: PayloadAction<IBusinessLocation>) => {
-                    state.loading = false;
-                    state.successMessage = "Location updated successfully.";
-                    state.currentLocation = action.payload;
-                    state.locations = state.locations.map((loc) =>
-                        loc.id === action.payload.id ? action.payload : loc
-                    );
-                }
-            )
+            .addCase(updateBusinessLocation.fulfilled, (state, action: PayloadAction<IBusinessLocation>) => {
+                state.loading = false;
+                state.successMessage = "Location updated successfully.";
+                state.currentLocation = action.payload;
+                state.locations = state.locations.map((loc) =>
+                    loc.id === action.payload.id ? action.payload : loc
+                );
+            })
             .addCase(updateBusinessLocation.rejected, (state, action) => {
                 state.loading = false;
-                state.error =
-                    action.payload || "Failed to update business location.";
+                state.error = action.payload || { message: "Failed to update business location." };
             })
 
-            // ------------------------------
             // DELETE
-            // ------------------------------
             .addCase(deleteBusinessLocation.pending, (state) => {
                 state.loading = true;
             })
-            .addCase(deleteBusinessLocation.fulfilled, (state) => {
+            .addCase(deleteBusinessLocation.fulfilled, (state, action: PayloadAction<string>) => {
                 state.loading = false;
                 state.successMessage = "Location deleted successfully.";
+                state.locations = state.locations.filter(loc => loc.id !== action.payload);
             })
             .addCase(deleteBusinessLocation.rejected, (state, action) => {
                 state.loading = false;
-                state.error =
-                    action.payload || "Failed to delete business location.";
+                state.error = action.payload || { message: "Failed to delete business location." };
             });
     },
 });

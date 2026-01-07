@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 
 interface CommonTableComponentProps<TData> {
-  columns: ColumnDef<TData, any>[];
+  columns: ColumnDef<TData, unknown>[];
   data: TData[];
   table?: ReactTableType<TData>; // Optional external table instance
 }

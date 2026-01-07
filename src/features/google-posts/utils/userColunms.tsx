@@ -64,7 +64,7 @@ export const getUserColumns = (pageIndex: number, pageSize: number): ColumnDef<U
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                            <Link href={ROUTES.CONSOLE.USER_DETAILS(user.id)}>View details</Link>
+                            <Link href={ROUTES.APP.MEMBERS.DETAIL(user.id)}>View details</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => console.log("Edit", user.id)}>
                             Edit

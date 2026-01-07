@@ -14,7 +14,7 @@ export const useTicket = () => {
         loading,
         error,
         successMessage,
-    } = useAppSelector((state) => state.ticket);
+    } = useAppSelector((state) => state.tickets);
 
     // ------------------------------
     // Actions / Thunks

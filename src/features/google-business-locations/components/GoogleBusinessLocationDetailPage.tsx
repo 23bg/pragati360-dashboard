@@ -30,7 +30,7 @@ export default function GoogleBusinessLocationDetailPage({ id }: { id?: string }
             title="Business Location Details"
             showInitialLoadingOnly={false}
             isLoading={loading}
-            error={error}
+            error={error?.message}
             onRetry={() => id && getLocationById(id)}
             showBackButton
             backHref={ROUTES.APP.BUSINESS.LOCATIONS.ROOT}

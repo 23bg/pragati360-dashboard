@@ -1,9 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as React from "react";
+import { Table } from "@tanstack/react-table"; // Import Table type
 
 import { Input } from "@/components/ui/input";
 
-const FilterInput = ({ table }: any) => {
+interface FilterInputProps<TData> {
+  table: Table<TData>;
+}
+
+const FilterInput = <TData,>({ table }: FilterInputProps<TData>) => {
   return (
     <Input
       placeholder="Filter emails..."

@@ -1,10 +1,10 @@
-import BusinessDetailPage from '@/features/business/components/BusinessDetailPage'
+import MerchantDetailPage from '@/features/merchant/components/BusinessDetailPage'
 import React from 'react'
 
 export default function page() {
     return (
         <div>
-            <BusinessDetailPage />
+            <MerchantDetailPage />
         </div>
     )
 }

@@ -118,7 +118,7 @@ export const getSubscriptionColumns = (): ColumnDef<ISubsciption>[] => [
       const payment = row.original;
       return (
         <Link
-          href={ROUTES.APP.SUBSCRIPTION_DETAIL(payment.id)}
+          href={ROUTES.APP.SUBSCRIPTION.DETAIL(payment.id)}
           className="text-blue-400 hover:text-blue-300 flex items-center gap-1"
         >
           View <ArrowRight className="w-4 h-4" />

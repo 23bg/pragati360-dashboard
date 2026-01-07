@@ -2,16 +2,16 @@
 
 import React, { useEffect } from "react";
 import PageWrapper from "@/components/custom/page-wrapper";
-import { useSubscriptions } from "../hooks/useSubscriptions";
+import useSubscriptions from "../hooks/useSubsciption";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import ROUTES from "@/shared/constants/route";
 
 export default function SubscriptionDetailPage({ id }: { id?: string }) {
-    const { currentPayment, loading, error, getPaymentById } = useSubscriptions();
+    const { currentSubscription, loading, error, getSubscriptionById } = useSubscriptions();
 
     useEffect(() => {
-        if (id) getPaymentById(id);
+        if (id) getSubscriptionById(id);
     }, [id]);
 
     return (
@@ -19,10 +19,10 @@ export default function SubscriptionDetailPage({ id }: { id?: string }) {
             title="Subscription / Payment Details"
             showInitialLoadingOnly={false}
             isLoading={loading}
-            error={error}
-            onRetry={() => id && getPaymentById(id)}
+            error={error?.message}
+            onRetry={() => id && getSubscriptionById(id)}
             showBackButton
-            backHref={ROUTES.CONSOLE.SUBSCRIPTIONS}
+            backHref={ROUTES.APP.SUBSCRIPTION.ROOT}
             backLabel="Back to Subscriptions"
         >
             {/* Loading Spinner */}
@@ -33,54 +33,54 @@ export default function SubscriptionDetailPage({ id }: { id?: string }) {
             )}
 
             {/* Payment Details */}
-            {!loading && currentPayment && (
+            {!loading && currentSubscription && (
                 <Card className="max-w-3xl mx-auto mt-6 border-white/10 bg-neutral-900 text-white">
                     <CardHeader>
                         <CardTitle>
-                            Payment #{currentPayment.id}
+                            Payment #{currentSubscription.id}
                         </CardTitle>
                         <p className="text-sm text-gray-400">
-                            Status: <span className="capitalize">{currentPayment.status}</span>
+                            Status: <span className="capitalize">{currentSubscription.status}</span>
                         </p>
                     </CardHeader>
 
                     <CardContent className="space-y-4 text-gray-300">
 
                         <div>
-                            <strong>Amount:</strong> ₹{currentPayment.amount}
+                            <strong>Amount:</strong> ₹{currentSubscription.amount}
                         </div>
 
                         <div>
-                            <strong>Currency:</strong> {currentPayment.currency}
+                            <strong>Currency:</strong> {currentSubscription.currency}
                         </div>
 
                         <div>
                             <strong>Payment Method:</strong>{" "}
-                            {currentPayment.paymentMethod || "N/A"}
+                            {currentSubscription.paymentMethod || "N/A"}
                         </div>
 
                         <div>
                             <strong>Razorpay Order ID:</strong>{" "}
-                            {currentPayment.razorpayOrderId || "N/A"}
+                            {currentSubscription.razorpayOrderId || "N/A"}
                         </div>
 
                         <div>
                             <strong>Razorpay Payment ID:</strong>{" "}
-                            {currentPayment.razorpayPaymentId || "N/A"}
+                            {currentSubscription.razorpayPaymentId || "N/A"}
                         </div>
 
-                        {currentPayment.description && (
+                        {currentSubscription.description && (
                             <div>
-                                <strong>Description:</strong> {currentPayment.description}
+                                <strong>Description:</strong> {currentSubscription.description}
                             </div>
                         )}
 
                         {/* Metadata */}
-                        {currentPayment.metadata && (
+                        {currentSubscription.metadata && (
                             <div>
                                 <strong>Metadata:</strong>
                                 <pre className="bg-neutral-800 rounded p-3 mt-1 text-sm">
-                                    {JSON.stringify(currentPayment.metadata, null, 2)}
+                                    {JSON.stringify(currentSubscription.metadata, null, 2)}
                                 </pre>
                             </div>
                         )}
@@ -88,20 +88,20 @@ export default function SubscriptionDetailPage({ id }: { id?: string }) {
                         {/* Refund */}
                         <div>
                             <strong>Refunded At:</strong>{" "}
-                            {currentPayment.refundedAt
-                                ? new Date(currentPayment.refundedAt).toLocaleString()
+                            {currentSubscription.refundedAt
+                                ? new Date(currentSubscription.refundedAt).toLocaleString()
                                 : "Not Refunded"}
                         </div>
 
                         {/* Timestamps */}
                         <div className="pt-4 border-t border-white/10">
                             <strong>Created At:</strong>{" "}
-                            {new Date(currentPayment.createdAt).toLocaleString()}
+                            {new Date(currentSubscription.createdAt).toLocaleString()}
                         </div>
 
                         <div>
                             <strong>Updated At:</strong>{" "}
-                            {new Date(currentPayment.updatedAt).toLocaleString()}
+                            {new Date(currentSubscription.updatedAt).toLocaleString()}
                         </div>
                     </CardContent>
                 </Card>

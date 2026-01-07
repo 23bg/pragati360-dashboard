@@ -70,7 +70,7 @@ export default function BusinessLocationListPage() {
             searchValue={inputQuery}
             onSearchChange={setInputQuery}
             isLoading={loading || !delayedRender}
-            error={error}
+            error={error?.message}
             onRetry={() =>
                 appToast.info("Retrying...", { description: "Fetching locations again..." })
             }

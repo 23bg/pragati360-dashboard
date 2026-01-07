@@ -30,10 +30,10 @@ export const API = {
             DELETE: (id: string) => `/google-business-locations/posts/${id}`,
         },
         REVIEW: {
-            BY_LOCATION: (locationId: string) => `/google/posts/location/${locationId}`,
-            CREATE: `/google/posts`,
-            UPDATE: (id: string) => `/google/posts/${id}`,
-            DELETE: (id: string) => `/google/posts/${id}`,
+            GET: (reviewId: string) => `/google-reviews/${reviewId}`, // New: Get single review
+            BY_LOCATION: (locationId: string) => `/google-reviews/location/${locationId}`, // Corrected path
+            REPLY: (reviewId: string) => `/google-reviews/${reviewId}/reply`, // Corrected to reply
+            UPDATE_REPLY: (reviewId: string) => `/google-reviews/${reviewId}/reply`, // Corrected to update reply
         },
         POST: {
             BY_LOCATION: (locationId: string) => `/google/posts/location/${locationId}`,

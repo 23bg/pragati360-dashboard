@@ -1,47 +1,34 @@
-import { useAppDispatch, useAppSelector } from "@/shared/hooks/reduxHooks";
-import {
-    updateUserProfile,
-    resetUserState,
-    clearUserMessages,
-    fetchCurrentUser,
-} from "../slices/userSlice";
+import { useGetCurrentUserQuery, useUpdateUserProfileMutation } from "../services/userApi"; // Import RTK Query hooks
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+import { SerializedError } from "@reduxjs/toolkit";
+
+function extractErrorMessage(error: FetchBaseQueryError | SerializedError | undefined): string | null {
+    if (!error) return null;
+
+    if ("message" in error && typeof error.message === "string") {
+        return error.message;
+    }
+
+    if ("data" in error && error.data && typeof error.data === "object" && "message" in error.data && typeof error.data.message === "string") {
+        return error.data.message;
+    }
+
+    // Fallback for unexpected error structures
+    return "An unexpected error occurred.";
+}
 
 export const useUser = () => {
-    const dispatch = useAppDispatch();
+    const { data, isLoading, isError, error, refetch } = useGetCurrentUserQuery();
+    const [updateUserProfile, { isLoading: isUpdating, error: updateError }] = useUpdateUserProfileMutation();
 
-    const {
-        users,
-        currentUser,
-        loading,
-        error,
-        successMessage,
-    } = useAppSelector((state) => state.users);
+    const currentUser = data?.data || null;
+    const loading = isLoading || isUpdating;
 
-    // ------------------------------
-    // Actions / Thunks
-    // ------------------------------
-    const getCurrentUser = () => dispatch(fetchCurrentUser());
-    const updateProfile = (id: string, payload: Partial<typeof currentUser>) =>
-        dispatch(updateUserProfile({ id, payload }));
-
-    // ------------------------------
-    // Local Reducer Actions
-    // ------------------------------
-    const resetState = () => dispatch(resetUserState());
-    const clearMessages = () => dispatch(clearUserMessages());
-
-    // ------------------------------
-    // Return Combined Interface
-    // ------------------------------
     return {
-        users,
         currentUser,
         loading,
-        error,
-        successMessage,
-        getCurrentUser,
-        updateProfile,
-        resetState,
-        clearMessages,
+        error: extractErrorMessage(error || updateError), // Combine and standardize errors
+        getCurrentUser: refetch, // Expose refetch for manual refresh
+        updateUserProfile,
     };
 };

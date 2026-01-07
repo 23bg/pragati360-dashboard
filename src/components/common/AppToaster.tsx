@@ -13,23 +13,23 @@ interface ToastOptions {
 const getStyles = (type: ToastType): React.CSSProperties => {
     const solidStyles: Record<ToastType, React.CSSProperties> = {
         default: {
-            '--normal-bg': 'var(--color-blue-600)',
-            '--normal-text': 'var(--color-gray-50)',
+            // '--normal-bg': 'var(--color-blue-600)',
+            // '--normal-text': 'var(--color-gray-50)',
         },
 
         success: {
-            '--normal-bg': 'var(--color-green-500)',
-            '--normal-text': 'var(--color-gray-50)',
+            // '--normal-bg': 'var(--color-green-500)',
+            // '--normal-text': 'var(--color-gray-50)',
         },
 
         warning: {
-            '--normal-bg': 'var(--color-amber-500)',
-            '--normal-text': 'var(--color-gray-50)',
+            // '--normal-bg': 'var(--color-amber-500)',
+            // '--normal-text': 'var(--color-gray-50)',
         },
 
         error: {
-            '--normal-bg': 'var(--color-re-500)',
-            '--normal-text': 'var(--color-gray-50)',
+            // '--normal-bg': 'var(--color-re-500)',
+            // '--normal-text': 'var(--color-gray-50)',
         }
     }
     return solidStyles[type]

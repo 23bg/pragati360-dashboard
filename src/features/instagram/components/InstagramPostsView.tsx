@@ -4,7 +4,15 @@ import React from "react";
 import Image from "next/image";
 import { Heart, MessageCircle, PlayCircle } from "lucide-react";
 
-const mockPosts = [
+interface InstagramPost {
+    id: string;
+    mediaUrl: string;
+    type: "image" | "video";
+    likes: number;
+    comments: number;
+}
+
+const mockPosts: InstagramPost[] = [
     {
         id: "1",
         mediaUrl: "https://picsum.photos/200/300?grayscale",
@@ -43,7 +51,7 @@ const mockPosts = [
 ];
 
 export default function InstagramPostsPage() {
-    const [posts, setPosts] = React.useState<any[]>([]);
+    const [posts, setPosts] = React.useState<InstagramPost[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {

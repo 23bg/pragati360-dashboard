@@ -1,82 +1,96 @@
-
-// src/lib/axios.ts
-import axios from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 import { API } from "../constants";
 import ROUTES from "../constants/route";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1', // ✅ empty base URL — relative to the current domain
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
   headers: { "Content-Type": "application/json" },
   withCredentials: true,
   timeout: 10000
 });
 
-// // 🔥 Used to avoid multiple refresh calls
-// let isRefreshing = false;
-// let failedQueue: any[] = [];
+// This queue will hold promises that should be resolved after the token is refreshed.
+let failedQueue: { resolve: (value: unknown) => void; reject: (reason?: unknown) => void }[] = [];
+let isRefreshing = false;
 
-// const processQueue = (error: any, token: string | null = null) => {
-//   failedQueue.forEach((prom) => {
-//     if (error) prom.reject(error);
-//     else prom.resolve(token);
-//   });
+// Extends the default request config to include a custom _retry flag
+interface RetryableAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
-//   failedQueue = [];
-// };
+const processQueue = (error: Error | null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(undefined);
+    }
+  });
+  failedQueue = [];
+};
 
-// // ------------------------------
-// // 📌 RESPONSE INTERCEPTOR
-// // ------------------------------
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableAxiosRequestConfig;
 
-//     // If unauthorized (401) and token is expired
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
+    // Intercept 401 Unauthorized responses
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If a refresh is already in progress, queue the original request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(originalRequest))
+          .catch((err) => Promise.reject(err));
+      }
 
-//       if (isRefreshing) {
-//         // Already refreshing → queue requests
-//         return new Promise(function (resolve, reject) {
-//           failedQueue.push({ resolve, reject });
-//         })
-//           .then(() => api(originalRequest))
-//           .catch((err) => Promise.reject(err));
-//       }
+      originalRequest._retry = true;
+      isRefreshing = true;
 
-//       isRefreshing = true;
+      try {
+        // Attempt to refresh the token using the refresh token cookie
+        await api.post(API.AUTH.REFRESH_TOKEN);
 
-//       try {
-//         console.log("🔄 Refreshing access token...");
+        // Process the queue of failed requests
+        processQueue(null);
 
-//         // Backend must send a new cookie
-//         await api.post(API.AUTH.REFRESH_TOKEN, {}, { withCredentials: true });
+        // Retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        const refreshErr = refreshError as AxiosError;
+        processQueue(refreshErr);
 
-//         isRefreshing = false;
-//         processQueue(null, null);
+        // If refresh fails, redirect to login
+        if (typeof window !== "undefined") {
+          window.location.href = ROUTES.AUTH.LOG_IN;
+        }
 
-//         // 🔁 replay the failed request
-//         return api(originalRequest);
-//       } catch (refreshError) {
-//         isRefreshing = false;
-//         processQueue(refreshError, null);
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
+    }
 
-//         console.error("❌ Refresh token failed", refreshError);
-
-//         // Logout user (optional)
-//         if (typeof window !== "undefined") {
-//           window.location.href = ROUTES.AUTH.LOG_IN;
-//         }
-
-//         return Promise.reject(refreshError);
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   }
-// );
+    return Promise.reject(error);
+  }
+);
 
 export default api;
+
+export async function handleApiCall<T>(promise: Promise<AxiosResponse<T>>): Promise<T> {
+  try {
+    const response = await promise;
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw {
+        message: error.response?.data?.message || error.message,
+        statusCode: error.response?.status,
+      };
+    }
+    throw { message: "An unexpected error occurred." };
+  }
+}
 
 

@@ -1,11 +1,11 @@
 import { useAppDispatch, useAppSelector } from "@/shared/hooks/reduxHooks";
 import {
-    fetchPaymentsByUser,
-    fetchPaymentById,
-    createPayment,
-    resetPaymentState,
-    clearPaymentMessages,
-    setCurrentPayment,
+    fetchSubscriptionsByUser,
+    fetchSubscriptionById,
+    createSubscription,
+    resetSubscriptionState,
+    clearSubscriptionMessages,
+    setCurrentSubscription,
 } from "@/features/subscriptions/slices/userSubsciption"; // <-- Your slice path
 import { ISubsciption } from "../types/subsciption.type";
 
@@ -14,8 +14,8 @@ const useSubsciptions = () => {
     const dispatch = useAppDispatch();
 
     const {
-        payments,
-        currentPayment,
+        subscriptions,
+        currentSubscription,
         loading,
         error,
         successMessage,
@@ -25,46 +25,46 @@ const useSubsciptions = () => {
     // Thunk Actions
     // ------------------------------
 
-    const getPaymentsByUser = (userId: string) =>
-        dispatch(fetchPaymentsByUser({ userId }));
+    const getSubscriptionsByUser = (userId: string) =>
+        dispatch(fetchSubscriptionsByUser({ userId }));
 
-    const getPaymentById = (id: string) =>
-        dispatch(fetchPaymentById({ id }));
+    const getSubscriptionById = (id: string) =>
+        dispatch(fetchSubscriptionById({ id }));
 
-    const createNewPayment = (payload: Partial<ISubsciption>) =>
-        dispatch(createPayment({ payload }));
+    const createNewSubscription = (payload: Partial<ISubsciption>) =>
+        dispatch(createSubscription({ payload }));
 
     // ------------------------------
     // Local Reducer Actions
     // ------------------------------
 
-    const resetState = () => dispatch(resetPaymentState());
+    const resetState = () => dispatch(resetSubscriptionState());
 
-    const clearMessages = () => dispatch(clearPaymentMessages());
+    const clearMessages = () => dispatch(clearSubscriptionMessages());
 
-    const selectPayment = (payment: ISubsciption | null) =>
-        dispatch(setCurrentPayment(payment));
+    const selectSubscription = (subscription: ISubsciption | null) =>
+        dispatch(setCurrentSubscription(subscription));
 
     // ------------------------------
     // Return Combined Hook API
     // ------------------------------
 
     return {
-        payments,
-        currentPayment,
+        subscriptions,
+        currentSubscription,
         loading,
         error,
         successMessage,
 
         // CRUD
-        getPaymentsByUser,
-        getPaymentById,
-        createNewPayment,
+        getSubscriptionsByUser,
+        getSubscriptionById,
+        createNewSubscription,
 
         // Helpers
         resetState,
         clearMessages,
-        selectPayment,
+        selectSubscription,
     };
 };
 

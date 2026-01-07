@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import PageWrapper from "@/components/custom/page-wrapper";
-import { useGooglePosts } from "@/features/posts/hooks/useGooglePosts";
+import { useGooglePosts } from "@/features/google-posts/hooks/useGooglePosts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import ROUTES from "@/shared/constants/route";
@@ -35,10 +35,10 @@ export default function GooglePostDetailPage({ id }: { id?: string }) {
             title="Google Post Details"
             showInitialLoadingOnly={false}
             isLoading={loading}
-            error={error}
+            error={error?.message}
             onRetry={() => id && selectPost(posts.find((p) => p.id === id) || null)}
             showBackButton
-            backHref={ROUTES.CONSOLE.GOOGLE_POSTS}
+            backHref={selectedPost ? ROUTES.APP.BUSINESS.LOCATIONS.POSTS.ROOT(selectedPost.googleLocationId) : ROUTES.APP.ROOT}
             backLabel="Back to Posts"
         >
             {/* ------------- Loading Spinner ------------- */}

@@ -96,7 +96,7 @@ export default function GooglePostListPage({ locationId }: GooglePostListProps) 
             searchValue={inputQuery}
             onSearchChange={setInputQuery}
             isLoading={loading || !delayedRender}
-            error={error}
+            error={error?.message}
             onRetry={() => getPostsByLocation(locationId)}
             showExport
             showRefresh

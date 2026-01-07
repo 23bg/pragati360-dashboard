@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import api from "@/shared/lib/axios";
+import { apiPost } from "@/shared/lib/apiService";
 import { API } from "@/shared/constants";
-import { User } from "@/shared/types";
 import { LoginPayload, SignupPayload, verificationPayload } from "@/features/auth/types/auth.type";
+import { User } from "@/features/user/types/user.type";
+import { AppError } from "@/shared/types/api";
 
 // ------------------------------
 // TYPES
@@ -10,14 +11,12 @@ import { LoginPayload, SignupPayload, verificationPayload } from "@/features/aut
 
 export interface AuthResponse {
     user: User;
-    accessToken: string;
-    refreshToken: string;
 }
 
 interface AuthState {
     user: User | null;
     loading: boolean;
-    error: string | null;
+    error: AppError | null;
     isAuthenticated: boolean;
     successMessage: string | null;
 }
@@ -38,61 +37,55 @@ const initialState: AuthState = {
 // ASYNC THUNKS
 // ------------------------------
 
-// LOGIN (returns user + tokens)
 export const loginUser = createAsyncThunk<
     AuthResponse,
     LoginPayload,
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("auth/loginUser", async (payload, { rejectWithValue }) => {
     try {
-        const response = await api.post(API.AUTH.LOG_IN, payload);
-        return response.data as AuthResponse;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Login failed. Please try again.";
-        return rejectWithValue(message);
+        return await apiPost<AuthResponse>(API.AUTH.LOG_IN, payload);
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// SIGNUP (returns user + tokens)
 export const signupUser = createAsyncThunk<
     AuthResponse,
     SignupPayload,
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("auth/signupUser", async (payload, { rejectWithValue }) => {
     try {
-        const response = await api.post(API.AUTH.SIGN_UP, payload);
-        return response.data as AuthResponse;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Signup failed. Please try again.";
-        return rejectWithValue(message);
+        return await apiPost<AuthResponse>(API.AUTH.SIGN_UP, payload);
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// VERIFY OTP (returns user + tokens)
 export const verifyOtp = createAsyncThunk<
     AuthResponse,
     verificationPayload,
-    { rejectValue: string }
+    { rejectValue: AppError }
 >("auth/verifyOtp", async (payload, { rejectWithValue }) => {
     try {
-        const response = await api.post(API.AUTH.VERIFY, payload);
-        return response.data.data as AuthResponse;
-    } catch (error: any) {
-        const message =
-            error?.response?.data?.message || "Invalid or expired OTP.";
-        return rejectWithValue(message);
+        return await apiPost<AuthResponse>(API.AUTH.VERIFY, payload);
+    } catch (error) {
+        return rejectWithValue(error as AppError);
     }
 });
 
-// LOGOUT
-export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
+export const logoutUser = createAsyncThunk<
+    void,
+    void,
+    { rejectValue: AppError }
+>("auth/logoutUser", async (_, { rejectWithValue }) => {
     try {
-        await api.post(API.AUTH.LOG_OUT);
-        return true;
-    } catch {
-        return true; // always clear state on frontend
+        // The apiPost service expects a return type, but logout may not return data.
+        // We can cast the result to void if the backend returns an empty success response.
+        await apiPost<null>(API.AUTH.LOG_OUT, {});
+    } catch (error) {
+        // Even if logout fails on the backend, we should clear the frontend state.
+        // The error can be ignored or logged if necessary, but we still proceed.
+        // Forcing a logout on the client is the primary goal.
     }
 });
 
@@ -105,12 +98,10 @@ const authSlice = createSlice({
     initialState,
     reducers: {
         resetAuthState: () => initialState,
-
         setUserFromStorage: (state, action: PayloadAction<User>) => {
             state.user = action.payload;
             state.isAuthenticated = true;
         },
-
         clearMessages: (state) => {
             state.error = null;
             state.successMessage = null;
@@ -119,101 +110,66 @@ const authSlice = createSlice({
 
     extraReducers: (builder) => {
         builder
-            // ------------------------------
             // LOGIN
-            // ------------------------------
             .addCase(loginUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                loginUser.fulfilled,
-                (state, action: PayloadAction<AuthResponse>) => {
-                    state.loading = false;
-                    state.user = action.payload.user;
-                    state.isAuthenticated = true;
-                    state.error = null;
+            .addCase(loginUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+                state.error = null;
+            })
+            .addCase(loginUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-                    // Save token (if storing client-side)
-                    localStorage.setItem("accessToken", action.payload.accessToken);
-                    localStorage.setItem("refreshToken", action.payload.refreshToken);
-                }
-            )
-            .addCase(
-                loginUser.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Login failed.";
-                }
-            )
-
-            // ------------------------------
             // SIGNUP
-            // ------------------------------
             .addCase(signupUser.pending, (state) => {
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(
-                signupUser.fulfilled,
-                (state, action: PayloadAction<AuthResponse>) => {
-                    state.loading = false;
-                    state.user = action.payload.user;
-                    state.isAuthenticated = true;
-                    state.successMessage = "Account created successfully.";
+            .addCase(signupUser.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+                state.successMessage = "Account created successfully.";
+            })
+            .addCase(signupUser.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-                    localStorage.setItem("accessToken", action.payload.accessToken);
-                    localStorage.setItem("refreshToken", action.payload.refreshToken);
-                }
-            )
-            .addCase(
-                signupUser.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Signup failed.";
-                }
-            )
-
-            // ------------------------------
             // VERIFY OTP
-            // ------------------------------
             .addCase(verifyOtp.pending, (state) => {
                 state.loading = true;
                 state.error = null;
                 state.successMessage = null;
             })
-            .addCase(
-                verifyOtp.fulfilled,
-                (state, action: PayloadAction<AuthResponse>) => {
-                    state.loading = false;
-                    state.user = action.payload.user;
-                    state.isAuthenticated = true;
-                    state.successMessage = "OTP verified successfully.";
-
-                    localStorage.setItem("accessToken", action.payload.accessToken);
-                    localStorage.setItem("refreshToken", action.payload.refreshToken);
-                }
-            )
-            .addCase(
-                verifyOtp.rejected,
-                (state, action: PayloadAction<string | undefined>) => {
-                    state.loading = false;
-                    state.error = action.payload || "Invalid OTP.";
-                }
-            )
-
-            // ------------------------------
-            // LOGOUT
-            // ------------------------------
-            .addCase(logoutUser.fulfilled, (state) => {
-                state.user = null;
-                state.isAuthenticated = false;
+            .addCase(verifyOtp.fulfilled, (state, action: PayloadAction<AuthResponse>) => {
                 state.loading = false;
-                state.error = null;
-                state.successMessage = null;
+                state.user = action.payload.user;
+                state.isAuthenticated = true;
+                state.successMessage = "OTP verified successfully.";
+            })
+            .addCase(verifyOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || null;
+            })
 
-                localStorage.removeItem("accessToken");
-                localStorage.removeItem("refreshToken");
+            // LOGOUT
+            .addCase(logoutUser.pending, (state) => {
+                state.loading = true; // Visual feedback for logout
+            })
+            .addCase(logoutUser.fulfilled, (state) => {
+                // This resets the state to initial values
+                Object.assign(state, initialState);
+            })
+            .addCase(logoutUser.rejected, (state) => {
+                // Still log out on the frontend even if backend call fails
+                Object.assign(state, initialState);
             });
     },
 });
@@ -226,3 +182,4 @@ export const { resetAuthState, setUserFromStorage, clearMessages } =
     authSlice.actions;
 
 export default authSlice.reducer;
+

@@ -1,21 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
-    domains: [
-      "example.com",       // your demo data
-      "cloudflare-ipfs.com",
-      "pub-xxxxxxxxxx.r2.dev",
-      "your-custom-cdn.com"
-    ],
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**"
-      }
-    ]
-  }
+        hostname: "example.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cloudflare-ipfs.com",
+      },
+      {
+        protocol: "https",
+        hostname: "pub-*.r2.dev",   // R2 buckets often use pub-<id>.r2.dev
+      },
+      {
+        protocol: "https",
+        hostname: "your-custom-cdn.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

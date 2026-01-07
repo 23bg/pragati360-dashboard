@@ -177,9 +177,7 @@ export default function SignupForm() {
                 },
 
                 onError: (err: any) => {
-                    appToast.info(err || "Signup failed", {
-                        postion: "top-center",
-                    });
+                    appToast.info(err || "Signup failed");
                 }
             }
         );

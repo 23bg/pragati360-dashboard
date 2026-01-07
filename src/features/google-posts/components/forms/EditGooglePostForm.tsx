@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useGooglePosts } from "@/features/google-posts/hooks/useGooglePosts";
-import { GooglePostSchema, GooglePostFormType } from "../schemas/googlePost.schema";
+import { GooglePostSchema, GooglePostFormType } from "@/features/google-posts/validations/google-post.schema";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -50,11 +50,14 @@ export const EditGooglePostForm: React.FC<EditGooglePostFormProps> = ({
     }, [successMessage]);
 
     const onSubmit = (values: GooglePostFormType) => {
-        updatePost(post.id, {
+        const payload = {
             ...values,
             googleLocationId: locationId,
             googleAccountId: accountId,
-        });
+            startTime: values.startTime ? new Date(values.startTime) : null,
+            endTime: values.endTime ? new Date(values.endTime) : null,
+        };
+        updatePost(post.id, payload);
     };
 
     return (
@@ -109,7 +112,7 @@ export const EditGooglePostForm: React.FC<EditGooglePostFormProps> = ({
                                 key={i}
                                 value={url}
                                 onChange={(e) => {
-                                    const updated = [...form.getValues("mediaUrls")];
+                                    const updated = [...(form.getValues("mediaUrls") || [])];
                                     updated[i] = e.target.value;
                                     form.setValue("mediaUrls", updated);
                                 }}
@@ -121,7 +124,7 @@ export const EditGooglePostForm: React.FC<EditGooglePostFormProps> = ({
                             type="button"
                             variant="secondary"
                             onClick={() =>
-                                form.setValue("mediaUrls", [...form.getValues("mediaUrls"), ""])
+                                form.setValue("mediaUrls", [...(form.getValues("mediaUrls") || []), ""])
                             }
                         >
                             + Add Image URL
@@ -150,7 +153,7 @@ export const EditGooglePostForm: React.FC<EditGooglePostFormProps> = ({
                     </div>
 
                     {/* Errors */}
-                    {error && <p className="text-red-400 text-sm">{error}</p>}
+                    {error && <p className="text-red-400 text-sm">{error.message}</p>}
 
                     <Button
                         type="submit"
